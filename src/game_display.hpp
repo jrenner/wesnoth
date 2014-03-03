@@ -21,14 +21,15 @@ class config;
 class tod_manager;
 class team;
 class unit;
-class unit_map;
+//class unit_map;
 
 #include "animated.hpp"
 #include "chat_events.hpp"
 #include "display.hpp"
 #include "pathfind/pathfind.hpp"
 
-#include <deque>
+//#include <deque>
+#include "unit_map.hpp"
 
 // This needs to be separate from display.h because of the static
 // singleton member, which will otherwise trigger link failure
@@ -293,7 +294,8 @@ private:
 	overlay_map overlay_map_;
 
 	/// collection of units destined to be drawn but not put into the unit map
-	std::deque<unit*> fake_units_;
+	//std::deque<unit*> fake_units_;
+	unit_map::t_umap fake_units_;
 
 	// Locations of the attack direction indicator's parts
 	map_location attack_indicator_src_;

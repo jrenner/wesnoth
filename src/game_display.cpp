@@ -243,7 +243,8 @@ void game_display::draw_invalidated()
 	halo::unrender(invalidated_);
 	display::draw_invalidated();
 
-	BOOST_FOREACH(unit* temp_unit, fake_units_) {
+	BOOST_FOREACH(const unit_map::t_umap::value_type& item, fake_units_) {
+		unit * temp_unit = item.second.unit;
 		const map_location& loc = temp_unit->get_location();
 		exclusive_unit_draw_requests_t::iterator request = exclusive_unit_draw_requests_.find(loc);
 		if (invalidated_.find(loc) != invalidated_.end()
@@ -620,8 +621,8 @@ void game_display::float_label(const map_location& loc, const std::string& text,
 
 std::vector<unit*> game_display::get_unit_list_for_invalidation() {
 	std::vector<unit*> unit_list = display::get_unit_list_for_invalidation();;
-	BOOST_FOREACH(unit *u, fake_units_) {
-		unit_list.push_back(u);
+	BOOST_FOREACH(const unit_map::t_umap::value_type& item, fake_units_) {
+		unit_list.push_back(item.second.unit);
 	}
 	return unit_list;;
 }
@@ -697,29 +698,47 @@ int game_display::fake_unit::remove_from_game_display(){
 	return ret;
 }
 
-void game_display::place_temporary_unit(unit *u)
+void game_display::place_temporary_unit(unit *p)
 {
-	if(std::find(fake_units_.begin(),fake_units_.end(), u) != fake_units_.end()) {
-		ERR_NG << "In game_display::place_temporary_unit: attempt to add duplicate fake unit." << std::endl;
-	} else {
-		fake_units_.push_back(u);
-		invalidate(u->get_location());
+	assert(p);
+
+	size_t unit_id = p->underlying_id();
+
+	unit_map::unit_pod upod;
+	upod.unit = p;
+
+	std::pair<unit_map::t_umap::iterator, bool>uinsert = fake_units_.insert(std::make_pair(unit_id, upod ));
+
+	if (! uinsert.second) {
+		//If the pod is empty reinsert the unit in the same list element
+		if ( uinsert.first->second.unit == NULL) {
+			unit_map::unit_pod &opod = uinsert.first->second;
+			opod.unit = p;
+			assert(opod.ref_count != 0);
+		} else {
+			unit *q = uinsert.first->second.unit;
+			ERR_NG << "In game_display::place_temporary_unit: attempt to add duplicate fake unit." << std::endl;
+			ERR_NG << "Trying to add " << p->name()
+				   << " - " << p->id() << " - " << p->underlying_id()
+				   << " ("  << p->get_location() << ") over " << q->name()
+				   << " - " << q->id() << " - " << q->underlying_id()
+				   << " ("  << q->get_location()
+				   << ")." << std::endl;
+			return;
+		}
 	}
+
+	invalidate(p->get_location());
 }
 
 int game_display::remove_temporary_unit(unit *u)
 {
-	int removed = 0;
-	std::deque<unit*>::iterator it =
-			std::remove(fake_units_.begin(), fake_units_.end(), u);
-	if (it != fake_units_.end()) {
-		removed = std::distance(it, fake_units_.end());
-		//std::remove doesn't remove anything without using erase afterwards.
-		fake_units_.erase(it, fake_units_.end());
-		invalidate(u->get_location());
-		// Redraw with no location to get rid of haloes
-		u->clear_haloes();
-	}
+	assert(u);
+	invalidate(u->get_location());
+	// Redraw with no location to get rid of haloes
+	u->clear_haloes();
+
+	int removed = fake_units_.erase(u->underlying_id());
 	if (removed > 1) {
 		ERR_NG << "Error: duplicate temp unit found in game_display::remove_temporary_unit" << std::endl;
 	}
