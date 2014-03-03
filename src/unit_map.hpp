@@ -87,6 +87,8 @@ if(try_add.second){i = try_add.first;}
  * Any access might cause a full lookup. Keeping iterators around holds onto memory.
  */
 class unit_map {
+
+public:
 	/// The pointer to the unit and a reference counter to record the number of extant iterators
 	/// pointing to this unit.
 	struct unit_pod {
@@ -107,8 +109,6 @@ class unit_map {
 	typedef std::map<size_t, unit_pod> t_umap;
 	///Map of location to umap iterator.
 	typedef boost::unordered_map<map_location, t_umap::iterator> t_lmap;
-
-public:
 
 // ~~~ Begin iterator code ~~~
 
