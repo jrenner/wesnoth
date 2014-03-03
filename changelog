@@ -1,4 +1,8 @@
 Version 1.11.11+dev:
+ * C++ Engine:
+   * game_display is refactored -- the list of fake units now has type 
+     unit_map::t_umap (i.e. std::map<size_t, unit_map::unit_pod>) rather
+     than std::deque<unit*>.
  * Language and i18n:
    * Updated translations: German
 
