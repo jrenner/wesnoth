@@ -126,7 +126,8 @@ bool action_result::is_ok()
 	return is_success();
 }
 
-void action_result::set_error(int error_code, bool log_as_error){
+void action_result::set_error(int error_code, bool log_as_error)
+{
 	status_ = error_code;
 	if (is_execution()) {
 		if (log_as_error) {
